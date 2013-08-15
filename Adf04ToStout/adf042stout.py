@@ -40,7 +40,7 @@ ADF04StatWt = False
 
 
 if len(sys.argv) < 2:
-    print("Problem: You must specify the ADF04 file")
+    print("Filename not specified")
     print("Looking for test.dat")
     #sys.exit(99)
     adf04_file_name = "test.dat"
@@ -80,8 +80,6 @@ energy_output_name = base_name + ".nrg.txt"
 tp_output_name = base_name + ".tp.txt"
 coll_output_name = base_name + ".coll.txt"
 
-print ("Outputting to %s, %s, and %s\n" % (energy_output_name,tp_output_name,coll_output_name))
-
 # Specify column position
 colpos_index = 5
 colpos_config = 24 #5+19
@@ -102,7 +100,13 @@ eina = []
 colls = []
 cs = []
 
-adf04_file = open(adf04_file_name,"r")
+try:
+    adf04_file = open(adf04_file_name,"r")
+except IOError:
+    print("PROBLEM: cannot open %s" % adf04_file_name)
+    sys.exit(10)
+    
+
 firstline = True
 readEnergyData = True
 temperatureLine = True
@@ -233,6 +237,7 @@ for current_line in adf04_file:
 
 adf04_file.close()
 
+print ("Outputting to %s, %s, and %s\n" % (energy_output_name,tp_output_name,coll_output_name))
 
 #**************Write out energy file*********************
 energy_output = open(energy_output_name,"w")
