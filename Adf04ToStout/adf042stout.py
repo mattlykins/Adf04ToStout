@@ -45,7 +45,7 @@ if len(sys.argv) < 2:
     #sys.exit(99)
     adf04_file_name = "test.dat"
 elif len(sys.argv) == 2:
-    if sys.argv[1] == "-?" or "/?":
+    if sys.argv[1] == "-?" or sys.argv[1] == "/?":
         run_help()
         sys.exit(0)
     adf04_file_name = str(sys.argv[1])
