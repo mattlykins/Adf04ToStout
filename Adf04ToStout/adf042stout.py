@@ -9,6 +9,8 @@ import datetime
 import fractions
 import re
 
+missingE = True
+
 # Test whether a string can be a number
 def is_number(x):
     try:
@@ -18,41 +20,65 @@ def is_number(x):
         return False
     
 # Remove brackets and punctuation from strings
-def remove_junk(string):
-    newstring = string.replace('?','').replace('[','').replace(']','').replace('+x','')
+def add_e(string):
+    if missingE:
+        newstring = string.replace("+","e+").replace("-","e-")
+    else:
+        newstring = string
     return newstring
 
-DEBUGMODE = True
+def run_help():
+    print("This program converts atomic data from the ADF04 format to Stout format.\n")
+    print("Syntax: adf042stout.py <Filename> <StatWeight True:False>  <MissingE True:False>\n")
+    print("Filename = The ADF04 file you want to process. The default is test.dat\n")
+    print("StatWeight = ADF04 is supposed to list the statistical weight. Sometimes they list J instead. The default is False (assume they gave J)\n")
+    print("MissingE = Some files are missing the E on number in scientific notation. The default is True (E is missing)")
+
+DEBUGMODE = False
 ADF04StatWt = False
 
-if len(sys.argv) != 2:
+
+
+if len(sys.argv) < 2:
     print("Problem: You must specify the ADF04 file")
+    print("Looking for test.dat")
     #sys.exit(99)
-    adf04_file_name = "adf04.dat"
-
+    adf04_file_name = "test.dat"
+elif len(sys.argv) == 2:
+    if sys.argv[1] == "-?" or "/?":
+        run_help()
+        sys.exit(0)
+    adf04_file_name = str(sys.argv[1])
+    print("Processing %s" % adf04_file_name)
+elif len(sys.argv) == 3:
+    adf04_file_name = str(sys.argv[1])
+    if str(sys.argv[2]).upper() == "TRUE":
+        ADF04StatWt = True
+    else:
+        ADF04StatWt = False
+        
+    print("Processing %s with StatWt = %s" % (adf04_file_name,ADF04StatWt))
 else:
-    adf04_file_name = str(sys.argv[2])
+    adf04_file_name = str(sys.argv[1])
+    if str(sys.argv[2]).upper() == "TRUE":
+        ADF04StatWt = True
+    else:
+        ADF04StatWt = False
+        
+    if str(sys.argv[3]).upper() == "TRUE":
+        missingE = True
+    else:
+        missingE = False
+        
+    print("Processing %s with StatWt = %s and missingE = %s" % (adf04_file_name,ADF04StatWt,missingE))
 
 
-# Generate output filenames from the inputs
-#path_list = energy_file_name.split('/')
-#base_name = (path_list[len(path_list)-1].split('.'))[0]
-#base_path = ""
 
-#for x in path_list:
-#    if x != path_list[len(path_list)-1]:
-#        base_path += x + "/"
+base_name = adf04_file_name.split(".")[0]
 
-#print (path_list)
-#print (base_path)
-
-
-#energy_output_name = base_path + base_name + ".nrg"
-#tp_output_name = base_path + base_name + ".tp"
-
-energy_output_name = "species.nrg.txt"
-tp_output_name = "species.tp.txt"
-coll_output_name = "species.coll.txt"
+energy_output_name = base_name + ".nrg.txt"
+tp_output_name = base_name + ".tp.txt"
+coll_output_name = base_name + ".coll.txt"
 
 print ("Outputting to %s, %s, and %s\n" % (energy_output_name,tp_output_name,coll_output_name))
 
@@ -95,7 +121,7 @@ for current_line in adf04_file:
             
         tempIndex = tempString.strip()
             
-        print("Index = %s" % tempIndex)
+        #print("Index = %s" % tempIndex)
         
         
         if tempIndex == "-1":
@@ -109,7 +135,7 @@ for current_line in adf04_file:
             
         tempConfig = tempString.strip()
             
-        print("Config = %s" % tempConfig)
+        #print("Config = %s" % tempConfig)
         
         #************************************************
         tempString = ""
@@ -118,7 +144,7 @@ for current_line in adf04_file:
             
         tempTerm = tempString.strip()
             
-        print("Term = %s" % tempTerm)
+        #print("Term = %s" % tempTerm)
         
         #Get stat weight
         #PROBLEM: ADF04 supposed to have multiplicity 2s+1. Several test files list J instead
@@ -126,11 +152,11 @@ for current_line in adf04_file:
         termToken = tempTermMod.split()
         
         if ADF04StatWt:
-            tempStatWt = termToken[len(termToken)-1]
+            tempStatWt = float(termToken[len(termToken)-1])
         else:
             tempStatWt = 2*float(termToken[len(termToken)-1])+1
         
-        print("StatWt = %s" % tempStatWt)
+        #print("StatWt = %s" % tempStatWt)
         
         #************************************************
         tempString = ""
@@ -139,7 +165,7 @@ for current_line in adf04_file:
             
         tempEnergy = tempString.strip()
             
-        print("Energy = %s" % tempEnergy)
+        #print("Energy = %s" % tempEnergy)
        
         #************************************************
         #if DEBUGMODE:
@@ -164,16 +190,16 @@ for current_line in adf04_file:
             numTemps = len(line_list)-2
             for i in range(2,len(line_list)):
                 tempTemp = line_list[i]
-                tempTemp = tempTemp.replace("+","e+").replace("-","e-")
+                tempTemp = add_e(tempTemp)
                 temps.append(float(tempTemp))
                 
             temperatureLine = False
         else:
             tempLevHi = line_list[0]
             tempLevLo = line_list[1]
-            tempEina = line_list[2].replace("+","e+").replace("-","e-")
+            tempEina = add_e(line_list[2])
             
-            print("%s\t%s\t%s" % (tempLevLo,tempLevHi,tempEina))
+            #print("%s\t%s\t%s" % (tempLevLo,tempLevHi,tempEina))
             
             #The first 3 columns are levhi, levlo, and eina. the last is bethe limit
             numColls = len(line_list)-4
@@ -188,7 +214,7 @@ for current_line in adf04_file:
                 
             for i in range(3,len(line_list)-1):
                 tempCS = line_list[i]
-                tempCS = tempCS.replace("+","e+").replace("-","e-")
+                tempCS = add_e(tempCS)
                 colls.append(float(tempCS))
                # print("\t%s" % tempCS) 
                 
