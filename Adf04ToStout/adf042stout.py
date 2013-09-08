@@ -144,6 +144,8 @@ for current_line in adf04_file:
         #************************************************
         tempString = ""
         for j in range(colpos_term,colpos_energy):
+            if current_line[j] == "\n":
+                break
             tempString = tempString + current_line[j]
             
         tempEnergy = tempString.strip()
